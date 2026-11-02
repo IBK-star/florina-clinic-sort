@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>פלורינה המלכה · מיון ציוד</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* plum ink on a pearl ground; green = keep, red = discard. Layout: one-screen app, card stack centered, actions in thumb reach */
+  --bg:#f5f2f6; --surface:#ffffff; --ink:#2b1f2e; --muted:#76687a; --line:#e4dde7;
+  --accent:#7a3c6c; --accent-soft:#f1e5ee;
+  --keep:#2e8a58; --keep-soft:#e3f3ea; --drop:#c4443b; --drop-soft:#fbe7e5; --maybe:#c08a1e; --maybe-soft:#fbf1dc;
+  --shadow:0 10px 30px rgba(60,30,60,.14);
+  --display:"Frank Ruhl Libre","David",Georgia,serif;
+  --body:"Assistant","Arial Hebrew",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#18131a; --surface:#241d27; --ink:#f3ecf4; --muted:#a898ac; --line:#3a303e;
+  --accent:#d79bc6; --accent-soft:#3a2636; --keep:#5cc58c; --keep-soft:#1d3428; --drop:#ef7b72; --drop-soft:#3d2120; --maybe:#e8b64e; --maybe-soft:#3a2f17;
+  --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#18131a; --surface:#241d27; --ink:#f3ecf4; --muted:#a898ac; --line:#3a303e;
+  --accent:#d79bc6; --accent-soft:#3a2636; --keep:#5cc58c; --keep-soft:#1d3428; --drop:#ef7b72; --drop-soft:#3d2120; --maybe:#e8b64e; --maybe-soft:#3a2f17;
+  --shadow:0 10px 30px rgba(0,0,0,.45); color-scheme:dark;}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.view{display:none;min-height:100%}
+.view.on{display:flex;flex-direction:column}
+.wrap{width:100%;max-width:720px;margin:0 auto;padding:16px}
+
+/* header */
+.brand{display:flex;flex-direction:column;gap:2px;padding:20px 0 8px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:2rem;margin:0;color:var(--accent);text-wrap:balance}
+.brand p{margin:0;color:var(--muted)}
+.crown{width:28px;height:18px;vertical-align:-2px;margin-inline-start:6px}
+
+/* totals */
+.totals{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+.tot{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 8px;text-align:center}
+.tot b{display:block;font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.tot span{color:var(--muted);font-size:.9rem}
+.tot.k b{color:var(--keep)} .tot.x b{color:var(--drop)} .tot.m b{color:var(--maybe)}
+
+/* category list */
+.cats{display:grid;gap:10px;margin-top:6px}
+.cat{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:start;width:100%}
+.cat img{width:72px;height:72px;object-fit:cover;border-radius:10px;background:var(--line)}
+.cat h3{margin:0 0 4px;font-size:1.1rem}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.bar .bk{background:var(--keep)} .bar .bx{background:var(--drop)} .bar .bm{background:var(--maybe)}
+.meta{display:flex;gap:10px;font-size:.85rem;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.pill{font-size:.85rem;font-weight:700;padding:6px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.done{background:var(--keep-soft);color:var(--keep)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.wide{flex:1}
+.hint{color:var(--muted);font-size:.9rem;line-height:1.5}
+
+/* swipe view */
+#swipe{height:100%}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;max-width:720px;margin:0 auto;width:100%}
+.top h2{flex:1;margin:0;font-size:1.15rem}
+.top .count{color:var(--muted);font-variant-numeric:tabular-nums}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-weight:600}
+.prog{height:4px;background:var(--line);max-width:688px;margin:0 auto;width:calc(100% - 32px);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.stage{flex:1;position:relative;max-width:520px;width:100%;margin:0 auto;padding:16px}
+.card{position:absolute;inset:16px;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform}
+.card img{width:100%;height:100%;object-fit:contain;background:var(--surface);pointer-events:none;-webkit-user-drag:none}
+.card.back{transform:scale(.94) translateY(10px);opacity:.7}
+.card .num{position:absolute;top:12px;inset-inline-start:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:4px 10px;font-size:.85rem;font-weight:700}
+.stamp{position:absolute;top:28px;padding:6px 14px;border:3px solid;border-radius:10px;font-weight:800;font-size:1.4rem;opacity:0;background:rgba(255,255,255,.85)}
+.stamp.k{right:20px;color:var(--keep);border-color:var(--keep);transform:rotate(12deg)}
+.stamp.x{left:20px;color:var(--drop);border-color:var(--drop);transform:rotate(-12deg)}
+.stamp.m{left:50%;top:auto;bottom:34px;color:var(--maybe);border-color:var(--maybe);transform:translateX(-50%)}
+.actions{display:flex;direction:ltr;justify-content:center;align-items:flex-start;gap:14px;padding:6px 16px 18px}
+.a{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:.85rem}
+.act{border:0;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);background:var(--surface)}
+.act.big{width:72px;height:72px}
+.act.small{width:52px;height:52px}
+.act svg{width:30px;height:30px}
+.act.small svg{width:24px;height:24px}
+.act.x{color:var(--drop)} .act.k{color:var(--keep)} .act.u{color:var(--muted)} .act.m{color:var(--maybe);font-weight:800;font-size:1.5rem}
+.act.small{margin-top:10px}
+.act:disabled{opacity:.35;cursor:default}
+
+/* done view */
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px}
+.center h2{font-family:var(--display);font-size:1.8rem;margin:0}
+
+/* summary */
+.sum-cat{margin:22px 0}
+.sum-cat h3{font-family:var(--display);font-size:1.35rem;margin:0 0 8px;display:flex;align-items:baseline;gap:8px}
+.sum-cat h3 small{font-family:var(--body);font-size:.9rem;color:var(--muted);font-weight:400}
+.grp{margin:8px 0;padding:8px;border-radius:14px;border:2px dashed transparent;transition:background .15s,border-color .15s}
+body.dragging .grp{border-color:var(--line)}
+.grp.over{border-color:var(--accent);background:var(--accent-soft)}
+.th.lift{touch-action:none;transform:scale(.92);box-shadow:0 0 0 3px var(--accent);animation:wig .35s ease-in-out infinite alternate}
+@keyframes wig{from{rotate:-2deg}to{rotate:2deg}}
+.th.ghost{position:fixed;top:0;left:0;z-index:60;pointer-events:none;box-shadow:var(--shadow);opacity:.95}
+.th{touch-action:manipulation}
+.grp h4{margin:0 0 6px;font-size:.95rem;display:flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.th{position:relative;border:0;padding:0;border-radius:12px;overflow:hidden;aspect-ratio:1;background:var(--line)}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th .n{position:absolute;bottom:4px;inset-inline-start:4px;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;font-weight:700;border-radius:99px;padding:1px 7px}
+.th.k{outline:3px solid var(--keep);outline-offset:-3px}
+.th.x{outline:3px solid var(--drop);outline-offset:-3px}
+.th.x img{filter:grayscale(.7);opacity:.75}
+.th.m{outline:3px solid var(--maybe);outline-offset:-3px}
+.choice{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.choice .btn{padding:12px 6px}
+.box img.pv{width:100%;max-height:45vh;object-fit:contain;border-radius:12px;background:var(--bg)}
+.empty{color:var(--muted);font-size:.9rem;margin:0}
+.banner{background:var(--accent-soft);border-radius:14px;padding:12px 14px;margin:10px 0;line-height:1.5}
+
+/* overlays */
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-120px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;transition:transform .25s;z-index:50;max-width:90vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.modal{position:fixed;inset:0;background:rgba(10,5,12,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:40}
+.modal.on{display:flex}
+.box{background:var(--surface);border-radius:18px;padding:20px;max-width:420px;width:100%}
+.box h3{margin:0 0 8px}
+.box textarea{width:100%;height:180px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--bg);color:var(--ink)}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;z-index:45;align-items:center;justify-content:center}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<section class="view" id="home">
+  <div class="wrap">
+    <header class="brand">
+      <h1 id="clinicName"></h1>
+      <p>מיון הציוד בקליניקה: מה נשאר ומה יוצא</p>
+    </header>
+    <div class="totals" id="homeTotals"></div>
+    <p class="hint">בוחרים קטגוריה ומחליקים כל תמונה: <b style="color:var(--keep)">ימינה לשמור</b>, <b style="color:var(--drop)">שמאלה להעיף</b>, <b style="color:var(--maybe)">למעלה לאולי</b>. ההתקדמות נשמרת, אפשר לצאת ולחזור מתי שרוצים.</p>
+    <div class="cats" id="cats"></div>
+    <div class="row">
+      <button class="btn wide" id="toSummary">לסיכום</button>
+    </div>
+  </div>
+</section>
+
+<!-- SWIPE -->
+<section class="view" id="swipe">
+  <div class="top">
+    <button class="iconbtn" id="backHome" aria-label="חזרה לקטגוריות">→ קטגוריות</button>
+    <h2 id="swCat"></h2>
+    <span class="count" id="swCount"></span>
+  </div>
+  <div class="prog"><i id="swProg"></i></div>
+  <div class="stage" id="stage"></div>
+  <div class="actions">
+    <div class="a"><button class="act small u" id="btnU" aria-label="חזרה אחורה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button><span>חזרה</span></div>
+    <div class="a"><button class="act big x" id="btnX" aria-label="להעיף"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span>להעיף ←</span></div>
+    <div class="a"><button class="act small m" id="btnM" aria-label="אולי">?</button><span>אולי ↑</span></div>
+    <div class="a"><button class="act big k" id="btnK" aria-label="לשמור"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button><span>→ לשמור</span></div>
+  </div>
+</section>
+
+<!-- CATEGORY DONE -->
+<section class="view" id="done">
+  <div class="center">
+    <h2 id="doneTitle"></h2>
+    <p class="hint" id="doneText"></p>
+    <div class="row" style="justify-content:center">
+      <button class="btn" id="doneNext"></button>
+      <button class="btn ghost" id="doneUndo">חזרה לתמונה האחרונה</button>
+      <button class="btn ghost" id="doneSum">לסיכום</button>
+    </div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section class="view" id="summary">
+  <div class="wrap">
+    <div class="top" style="padding:12px 0">
+      <button class="iconbtn" id="sumBack">→ קטגוריות</button>
+      <h2 id="sumTitle" style="font-family:var(--display);font-size:1.5rem"></h2>
+    </div>
+    <div class="totals" id="sumTotals"></div>
+    <div id="sumBanner"></div>
+    <p class="hint">לחיצה על תמונה פותחת אותה בגדול ומאפשרת לשנות החלטה. <b>לחיצה כפולה</b> מרימה אותה, ואז אפשר לגרור אותה לקבוצה אחרת.</p>
+    <div class="row">
+      <button class="btn" id="copySum">העתקת הסיכום</button>
+      <a class="btn ghost" id="waSum" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">שליחה בוואטסאפ</a>
+      <button class="btn ghost" id="resetAll">התחלה מחדש</button>
+    </div>
+    <div id="sumBody"></div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox"><img id="lbImg" alt=""></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+
+<script>
+const DATA = {"clinic": "פלורינה המלכה", "categories": [{"id": "c1", "name": "בובות + קצת אביזרים", "items": [{"id": "c1_1", "src": "img/c1_001.jpg"}, {"id": "c1_2", "src": "img/c1_002.jpg"}, {"id": "c1_3", "src": "img/c1_003.jpg"}, {"id": "c1_4", "src": "img/c1_004.jpg"}, {"id": "c1_5", "src": "img/c1_005.jpg"}, {"id": "c1_6", "src": "img/c1_006.jpg"}, {"id": "c1_7", "src": "img/c1_007.jpg"}, {"id": "c1_8", "src": "img/c1_008.jpg"}, {"id": "c1_9", "src": "img/c1_009.jpg"}, {"id": "c1_10", "src": "img/c1_010.jpg"}, {"id": "c1_11", "src": "img/c1_011.jpg"}, {"id": "c1_12", "src": "img/c1_012.jpg"}, {"id": "c1_13", "src": "img/c1_013.jpg"}, {"id": "c1_14", "src": "img/c1_014.jpg"}]}, {"id": "c2", "name": "מגירות שקופות", "items": [{"id": "c2_1", "src": "img/c2_001.jpg"}, {"id": "c2_2", "src": "img/c2_002.jpg"}, {"id": "c2_3", "src": "img/c2_003.jpg"}]}, {"id": "c3", "name": "מטבחון", "items": [{"id": "c3_1", "src": "img/c3_001.jpg"}, {"id": "c3_2", "src": "img/c3_002.jpg"}, {"id": "c3_3", "src": "img/c3_003.jpg"}, {"id": "c3_4", "src": "img/c3_004.jpg"}, {"id": "c3_5", "src": "img/c3_005.jpg"}, {"id": "c3_6", "src": "img/c3_006.jpg"}, {"id": "c3_7", "src": "img/c3_007.jpg"}, {"id": "c3_8", "src": "img/c3_008.jpg"}, {"id": "c3_9", "src": "img/c3_009.jpg"}, {"id": "c3_10", "src": "img/c3_010.jpg"}, {"id": "c3_11", "src": "img/c3_011.jpg"}, {"id": "c3_12", "src": "img/c3_012.jpg"}]}, {"id": "c4", "name": "משחקי עץ / ערכות", "items": [{"id": "c4_1", "src": "img/c4_001.jpg"}, {"id": "c4_2", "src": "img/c4_002.jpg"}, {"id": "c4_3", "src": "img/c4_003.jpg"}, {"id": "c4_4", "src": "img/c4_004.jpg"}, {"id": "c4_5", "src": "img/c4_005.jpg"}, {"id": "c4_6", "src": "img/c4_006.jpg"}, {"id": "c4_7", "src": "img/c4_007.jpg"}, {"id": "c4_8", "src": "img/c4_008.jpg"}, {"id": "c4_9", "src": "img/c4_009.jpg"}, {"id": "c4_10", "src": "img/c4_010.jpg"}, {"id": "c4_11", "src": "img/c4_011.jpg"}, {"id": "c4_12", "src": "img/c4_012.jpg"}, {"id": "c4_13", "src": "img/c4_013.jpg"}, {"id": "c4_14", "src": "img/c4_014.jpg"}, {"id": "c4_15", "src": "img/c4_015.jpg"}, {"id": "c4_16", "src": "img/c4_016.jpg"}, {"id": "c4_17", "src": "img/c4_017.jpg"}, {"id": "c4_18", "src": "img/c4_018.jpg"}]}, {"id": "c5", "name": "משחקי פאזל מגירה תחתונה בארון", "items": [{"id": "c5_1", "src": "img/c5_001.jpg"}, {"id": "c5_2", "src": "img/c5_002.jpg"}, {"id": "c5_3", "src": "img/c5_003.jpg"}, {"id": "c5_4", "src": "img/c5_004.jpg"}, {"id": "c5_5", "src": "img/c5_005.jpg"}, {"id": "c5_6", "src": "img/c5_006.jpg"}, {"id": "c5_7", "src": "img/c5_007.jpg"}, {"id": "c5_8", "src": "img/c5_008.jpg"}, {"id": "c5_9", "src": "img/c5_009.jpg"}, {"id": "c5_10", "src": "img/c5_010.jpg"}]}, {"id": "c6", "name": "משחקי קופסא / למידה קטנים מגירה אמצעית ארון", "items": [{"id": "c6_1", "src": "img/c6_001.jpg"}, {"id": "c6_2", "src": "img/c6_002.jpg"}, {"id": "c6_3", "src": "img/c6_003.jpg"}, {"id": "c6_4", "src": "img/c6_004.jpg"}, {"id": "c6_5", "src": "img/c6_005.jpg"}, {"id": "c6_6", "src": "img/c6_006.jpg"}, {"id": "c6_7", "src": "img/c6_007.jpg"}, {"id": "c6_8", "src": "img/c6_008.jpg"}, {"id": "c6_9", "src": "img/c6_009.jpg"}, {"id": "c6_10", "src": "img/c6_010.jpg"}, {"id": "c6_11", "src": "img/c6_011.jpg"}, {"id": "c6_12", "src": "img/c6_012.jpg"}, {"id": "c6_13", "src": "img/c6_013.jpg"}, {"id": "c6_14", "src": "img/c6_014.jpg"}]}, {"id": "c7", "name": "משחקי קופסא גדולים", "items": [{"id": "c7_1", "src": "img/c7_001.jpg"}, {"id": "c7_2", "src": "img/c7_002.jpg"}, {"id": "c7_3", "src": "img/c7_003.jpg"}, {"id": "c7_4", "src": "img/c7_004.jpg"}, {"id": "c7_5", "src": "img/c7_005.jpg"}, {"id": "c7_6", "src": "img/c7_006.jpg"}, {"id": "c7_7", "src": "img/c7_007.jpg"}, {"id": "c7_8", "src": "img/c7_008.jpg"}, {"id": "c7_9", "src": "img/c7_009.jpg"}, {"id": "c7_10", "src": "img/c7_010.jpg"}, {"id": "c7_11", "src": "img/c7_011.jpg"}, {"id": "c7_12", "src": "img/c7_012.jpg"}, {"id": "c7_13", "src": "img/c7_013.jpg"}, {"id": "c7_14", "src": "img/c7_014.jpg"}, {"id": "c7_15", "src": "img/c7_015.jpg"}, {"id": "c7_16", "src": "img/c7_016.jpg"}, {"id": "c7_17", "src": "img/c7_017.jpg"}, {"id": "c7_18", "src": "img/c7_018.jpg"}, {"id": "c7_19", "src": "img/c7_019.jpg"}, {"id": "c7_20", "src": "img/c7_020.jpg"}, {"id": "c7_21", "src": "img/c7_021.jpg"}, {"id": "c7_22", "src": "img/c7_022.jpg"}, {"id": "c7_23", "src": "img/c7_023.jpg"}, {"id": "c7_24", "src": "img/c7_024.jpg"}, {"id": "c7_25", "src": "img/c7_025.jpg"}, {"id": "c7_26", "src": "img/c7_026.jpg"}, {"id": "c7_27", "src": "img/c7_027.jpg"}, {"id": "c7_28", "src": "img/c7_028.jpg"}, {"id": "c7_29", "src": "img/c7_029.jpg"}, {"id": "c7_30", "src": "img/c7_030.jpg"}, {"id": "c7_31", "src": "img/c7_031.jpg"}, {"id": "c7_32", "src": "img/c7_032.jpg"}, {"id": "c7_33", "src": "img/c7_033.jpg"}, {"id": "c7_34", "src": "img/c7_034.jpg"}, {"id": "c7_35", "src": "img/c7_035.jpg"}, {"id": "c7_36", "src": "img/c7_036.jpg"}, {"id": "c7_37", "src": "img/c7_037.jpg"}, {"id": "c7_38", "src": "img/c7_038.jpg"}, {"id": "c7_39", "src": "img/c7_039.jpg"}, {"id": "c7_40", "src": "img/c7_040.jpg"}, {"id": "c7_41", "src": "img/c7_041.jpg"}, {"id": "c7_42", "src": "img/c7_042.jpg"}, {"id": "c7_43", "src": "img/c7_043.jpg"}, {"id": "c7_44", "src": "img/c7_044.jpg"}, {"id": "c7_45", "src": "img/c7_045.jpg"}, {"id": "c7_46", "src": "img/c7_046.jpg"}, {"id": "c7_47", "src": "img/c7_047.jpg"}, {"id": "c7_48", "src": "img/c7_048.jpg"}, {"id": "c7_49", "src": "img/c7_049.jpg"}, {"id": "c7_50", "src": "img/c7_050.jpg"}, {"id": "c7_51", "src": "img/c7_051.jpg"}, {"id": "c7_52", "src": "img/c7_052.jpg"}, {"id": "c7_53", "src": "img/c7_053.jpg"}, {"id": "c7_54", "src": "img/c7_054.jpg"}, {"id": "c7_55", "src": "img/c7_055.jpg"}, {"id": "c7_56", "src": "img/c7_056.jpg"}, {"id": "c7_57", "src": "img/c7_057.jpg"}, {"id": "c7_58", "src": "img/c7_058.jpg"}, {"id": "c7_59", "src": "img/c7_059.jpg"}, {"id": "c7_60", "src": "img/c7_060.jpg"}, {"id": "c7_61", "src": "img/c7_061.jpg"}, {"id": "c7_62", "src": "img/c7_062.jpg"}, {"id": "c7_63", "src": "img/c7_063.jpg"}, {"id": "c7_64", "src": "img/c7_064.jpg"}, {"id": "c7_65", "src": "img/c7_065.jpg"}, {"id": "c7_66", "src": "img/c7_066.jpg"}, {"id": "c7_67", "src": "img/c7_067.jpg"}, {"id": "c7_68", "src": "img/c7_068.jpg"}, {"id": "c7_69", "src": "img/c7_069.jpg"}, {"id": "c7_70", "src": "img/c7_070.jpg"}, {"id": "c7_71", "src": "img/c7_071.jpg"}, {"id": "c7_72", "src": "img/c7_072.jpg"}, {"id": "c7_73", "src": "img/c7_073.jpg"}, {"id": "c7_74", "src": "img/c7_074.jpg"}, {"id": "c7_75", "src": "img/c7_075.jpg"}, {"id": "c7_76", "src": "img/c7_076.jpg"}]}, {"id": "c8", "name": "משחקי קופסא קטנים מגירה עליונה בארון", "items": [{"id": "c8_1", "src": "img/c8_001.jpg"}, {"id": "c8_2", "src": "img/c8_002.jpg"}, {"id": "c8_3", "src": "img/c8_003.jpg"}, {"id": "c8_4", "src": "img/c8_004.jpg"}, {"id": "c8_5", "src": "img/c8_005.jpg"}, {"id": "c8_6", "src": "img/c8_006.jpg"}, {"id": "c8_7", "src": "img/c8_007.jpg"}, {"id": "c8_8", "src": "img/c8_008.jpg"}, {"id": "c8_9", "src": "img/c8_009.jpg"}, {"id": "c8_10", "src": "img/c8_010.jpg"}, {"id": "c8_11", "src": "img/c8_011.jpg"}, {"id": "c8_12", "src": "img/c8_012.jpg"}, {"id": "c8_13", "src": "img/c8_013.jpg"}, {"id": "c8_14", "src": "img/c8_014.jpg"}, {"id": "c8_15", "src": "img/c8_015.jpg"}, {"id": "c8_16", "src": "img/c8_016.jpg"}, {"id": "c8_17", "src": "img/c8_017.jpg"}, {"id": "c8_18", "src": "img/c8_018.jpg"}, {"id": "c8_19", "src": "img/c8_019.jpg"}, {"id": "c8_20", "src": "img/c8_020.jpg"}, {"id": "c8_21", "src": "img/c8_021.jpg"}, {"id": "c8_22", "src": "img/c8_022.jpg"}, {"id": "c8_23", "src": "img/c8_023.jpg"}, {"id": "c8_24", "src": "img/c8_024.jpg"}]}, {"id": "c9", "name": "משחקי תינוקות", "items": [{"id": "c9_1", "src": "img/c9_001.jpg"}, {"id": "c9_2", "src": "img/c9_002.jpg"}, {"id": "c9_3", "src": "img/c9_003.jpg"}, {"id": "c9_4", "src": "img/c9_004.jpg"}, {"id": "c9_5", "src": "img/c9_005.jpg"}, {"id": "c9_6", "src": "img/c9_006.jpg"}, {"id": "c9_7", "src": "img/c9_007.jpg"}, {"id": "c9_8", "src": "img/c9_008.jpg"}, {"id": "c9_9", "src": "img/c9_009.jpg"}, {"id": "c9_10", "src": "img/c9_010.jpg"}, {"id": "c9_11", "src": "img/c9_011.jpg"}, {"id": "c9_12", "src": "img/c9_012.jpg"}, {"id": "c9_13", "src": "img/c9_013.jpg"}, {"id": "c9_14", "src": "img/c9_014.jpg"}, {"id": "c9_15", "src": "img/c9_015.jpg"}]}, {"id": "c10", "name": "ספרים", "items": [{"id": "c10_1", "src": "img/c10_001.jpg"}, {"id": "c10_2", "src": "img/c10_002.jpg"}, {"id": "c10_3", "src": "img/c10_003.jpg"}, {"id": "c10_4", "src": "img/c10_004.jpg"}, {"id": "c10_5", "src": "img/c10_005.jpg"}, {"id": "c10_6", "src": "img/c10_006.jpg"}, {"id": "c10_7", "src": "img/c10_007.jpg"}, {"id": "c10_8", "src": "img/c10_008.jpg"}, {"id": "c10_9", "src": "img/c10_009.jpg"}, {"id": "c10_10", "src": "img/c10_010.jpg"}, {"id": "c10_11", "src": "img/c10_011.jpg"}, {"id": "c10_12", "src": "img/c10_012.jpg"}, {"id": "c10_13", "src": "img/c10_013.jpg"}, {"id": "c10_14", "src": "img/c10_014.jpg"}, {"id": "c10_15", "src": "img/c10_015.jpg"}, {"id": "c10_16", "src": "img/c10_016.jpg"}, {"id": "c10_17", "src": "img/c10_017.jpg"}, {"id": "c10_18", "src": "img/c10_018.jpg"}, {"id": "c10_19", "src": "img/c10_019.jpg"}, {"id": "c10_20", "src": "img/c10_020.jpg"}, {"id": "c10_21", "src": "img/c10_021.jpg"}, {"id": "c10_22", "src": "img/c10_022.jpg"}, {"id": "c10_23", "src": "img/c10_023.jpg"}, {"id": "c10_24", "src": "img/c10_024.jpg"}, {"id": "c10_25", "src": "img/c10_025.jpg"}, {"id": "c10_26", "src": "img/c10_026.jpg"}, {"id": "c10_27", "src": "img/c10_027.jpg"}, {"id": "c10_28", "src": "img/c10_028.jpg"}, {"id": "c10_29", "src": "img/c10_029.jpg"}, {"id": "c10_30", "src": "img/c10_030.jpg"}, {"id": "c10_31", "src": "img/c10_031.jpg"}, {"id": "c10_32", "src": "img/c10_032.jpg"}, {"id": "c10_33", "src": "img/c10_033.jpg"}, {"id": "c10_34", "src": "img/c10_034.jpg"}, {"id": "c10_35", "src": "img/c10_035.jpg"}, {"id": "c10_36", "src": "img/c10_036.jpg"}, {"id": "c10_37", "src": "img/c10_037.jpg"}, {"id": "c10_38", "src": "img/c10_038.jpg"}, {"id": "c10_39", "src": "img/c10_039.jpg"}, {"id": "c10_40", "src": "img/c10_040.jpg"}, {"id": "c10_41", "src": "img/c10_041.jpg"}, {"id": "c10_42", "src": "img/c10_042.jpg"}, {"id": "c10_43", "src": "img/c10_043.jpg"}, {"id": "c10_44", "src": "img/c10_044.jpg"}, {"id": "c10_45", "src": "img/c10_045.jpg"}, {"id": "c10_46", "src": "img/c10_046.jpg"}, {"id": "c10_47", "src": "img/c10_047.jpg"}, {"id": "c10_48", "src": "img/c10_048.jpg"}, {"id": "c10_49", "src": "img/c10_049.jpg"}, {"id": "c10_50", "src": "img/c10_050.jpg"}, {"id": "c10_51", "src": "img/c10_051.jpg"}, {"id": "c10_52", "src": "img/c10_052.jpg"}, {"id": "c10_53", "src": "img/c10_053.jpg"}, {"id": "c10_54", "src": "img/c10_054.jpg"}, {"id": "c10_55", "src": "img/c10_055.jpg"}, {"id": "c10_56", "src": "img/c10_056.jpg"}, {"id": "c10_57", "src": "img/c10_057.jpg"}, {"id": "c10_58", "src": "img/c10_058.jpg"}, {"id": "c10_59", "src": "img/c10_059.jpg"}, {"id": "c10_60", "src": "img/c10_060.jpg"}, {"id": "c10_61", "src": "img/c10_061.jpg"}, {"id": "c10_62", "src": "img/c10_062.jpg"}, {"id": "c10_63", "src": "img/c10_063.jpg"}, {"id": "c10_64", "src": "img/c10_064.jpg"}, {"id": "c10_65", "src": "img/c10_065.jpg"}, {"id": "c10_66", "src": "img/c10_066.jpg"}, {"id": "c10_67", "src": "img/c10_067.jpg"}, {"id": "c10_68", "src": "img/c10_068.jpg"}, {"id": "c10_69", "src": "img/c10_069.jpg"}, {"id": "c10_70", "src": "img/c10_070.jpg"}, {"id": "c10_71", "src": "img/c10_071.jpg"}, {"id": "c10_72", "src": "img/c10_072.jpg"}, {"id": "c10_73", "src": "img/c10_073.jpg"}, {"id": "c10_74", "src": "img/c10_074.jpg"}, {"id": "c10_75", "src": "img/c10_075.jpg"}, {"id": "c10_76", "src": "img/c10_076.jpg"}, {"id": "c10_77", "src": "img/c10_077.jpg"}, {"id": "c10_78", "src": "img/c10_078.jpg"}, {"id": "c10_79", "src": "img/c10_079.jpg"}, {"id": "c10_80", "src": "img/c10_080.jpg"}, {"id": "c10_81", "src": "img/c10_081.jpg"}, {"id": "c10_82", "src": "img/c10_082.jpg"}, {"id": "c10_83", "src": "img/c10_083.jpg"}, {"id": "c10_84", "src": "img/c10_084.jpg"}, {"id": "c10_85", "src": "img/c10_085.jpg"}, {"id": "c10_86", "src": "img/c10_086.jpg"}, {"id": "c10_87", "src": "img/c10_087.jpg"}, {"id": "c10_88", "src": "img/c10_088.jpg"}, {"id": "c10_89", "src": "img/c10_089.jpg"}, {"id": "c10_90", "src": "img/c10_090.jpg"}, {"id": "c10_91", "src": "img/c10_091.jpg"}, {"id": "c10_92", "src": "img/c10_092.jpg"}, {"id": "c10_93", "src": "img/c10_093.jpg"}, {"id": "c10_94", "src": "img/c10_094.jpg"}, {"id": "c10_95", "src": "img/c10_095.jpg"}, {"id": "c10_96", "src": "img/c10_096.jpg"}, {"id": "c10_97", "src": "img/c10_097.jpg"}, {"id": "c10_98", "src": "img/c10_098.jpg"}, {"id": "c10_99", "src": "img/c10_099.jpg"}, {"id": "c10_100", "src": "img/c10_100.jpg"}, {"id": "c10_101", "src": "img/c10_101.jpg"}, {"id": "c10_102", "src": "img/c10_102.jpg"}, {"id": "c10_103", "src": "img/c10_103.jpg"}, {"id": "c10_104", "src": "img/c10_104.jpg"}, {"id": "c10_105", "src": "img/c10_105.jpg"}]}, {"id": "c11", "name": "עוד ספרים", "items": [{"id": "c11_1", "src": "img/c11_001.jpg"}, {"id": "c11_2", "src": "img/c11_002.jpg"}, {"id": "c11_3", "src": "img/c11_003.jpg"}, {"id": "c11_4", "src": "img/c11_004.jpg"}, {"id": "c11_5", "src": "img/c11_005.jpg"}, {"id": "c11_6", "src": "img/c11_006.jpg"}, {"id": "c11_7", "src": "img/c11_007.jpg"}, {"id": "c11_8", "src": "img/c11_008.jpg"}, {"id": "c11_9", "src": "img/c11_009.jpg"}, {"id": "c11_10", "src": "img/c11_010.jpg"}, {"id": "c11_11", "src": "img/c11_011.jpg"}]}, {"id": "c12", "name": "פליימוביל", "items": [{"id": "c12_1", "src": "img/c12_001.jpg"}, {"id": "c12_2", "src": "img/c12_002.jpg"}, {"id": "c12_3", "src": "img/c12_003.jpg"}, {"id": "c12_4", "src": "img/c12_004.jpg"}]}], "version": "821bcb5219"};
+const KEY = "florina-sort-v2-" + DATA.version;
+const WORD = {k:"שומרת", x:"זורקת", m:"אולי"};
+let S = {d:{}, h:[]};
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} }
+
+const $ = id => document.getElementById(id);
+const items = {}; DATA.categories.forEach(c => c.items.forEach((it,i) => { it.cat = c; it.n = i+1; items[it.id] = it; }));
+let curCat = null, busy = false;
+let maybePass = null; // Set of ids already seen in a "maybe" review pass, or null
+
+function stats(cat){
+  const list = cat ? cat.items : Object.values(items);
+  const r = {k:0, x:0, m:0, total:list.length};
+  list.forEach(it => { const d = S.d[it.id]; if (d) r[d]++; });
+  r.left = r.total - r.k - r.x - r.m; return r;
+}
+function totalsHTML(){
+  const s = stats();
+  return `<div class="tot k"><b>${s.k}</b><span>שומרת</span></div><div class="tot x"><b>${s.x}</b><span>זורקת</span></div><div class="tot m"><b>${s.m}</b><span>אולי</span></div><div class="tot"><b>${s.left}</b><span>נשאר</span></div>`;
+}
+function show(v){ document.querySelectorAll(".view").forEach(e => e.classList.toggle("on", e.id===v)); window.scrollTo(0,0); }
+function toast(t){ const e=$("toast"); e.textContent=t; e.classList.add("on"); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove("on"),1800); }
+
+/* HOME */
+function renderHome(){
+  maybePass = null;
+  $("clinicName").innerHTML = DATA.clinic + ` <svg class="crown" viewBox="0 0 28 18" fill="currentColor" aria-hidden="true"><path d="M2 16h24l2-13-7 6-7-8-7 8-7-6z"/></svg>`;
+  $("homeTotals").innerHTML = totalsHTML();
+  $("cats").innerHTML = DATA.categories.map(c => {
+    const s = stats(c), w = n => n/s.total*100;
+    const label = s.left===0 ? "הושלם" : (s.total-s.left ? "להמשיך" : "להתחיל");
+    return `<button class="cat" data-c="${c.id}">
+      <img src="${c.items[0].src}" alt="" loading="lazy">
+      <div><h3>${c.name}</h3>
+        <div class="bar"><i class="bk" style="width:${w(s.k)}%"></i><i class="bm" style="width:${w(s.m)}%"></i><i class="bx" style="width:${w(s.x)}%"></i></div>
+        <div class="meta"><span>${s.total} פריטים</span><span style="color:var(--keep)">${s.k} שומרת</span><span style="color:var(--maybe)">${s.m} אולי</span><span style="color:var(--drop)">${s.x} זורקת</span></div>
+      </div>
+      <span class="pill ${s.left===0?'done':''}">${label}</span></button>`;
+  }).join("");
+  $("toSummary").textContent = stats().left === 0 ? "לסיכום הסופי" : "לסיכום ביניים";
+  show("home");
+}
+$("cats").addEventListener("click", e => { const b = e.target.closest(".cat"); if (b) openCat(DATA.categories.find(c => c.id===b.dataset.c)); });
+$("toSummary").onclick = renderSummary;
+
+/* SWIPE */
+function queue(cat){
+  if (maybePass) return Object.values(items).filter(it => S.d[it.id]==="m" && !maybePass.has(it.id));
+  return cat.items.filter(it => !S.d[it.id]);
+}
+function openCat(cat){ maybePass = null; curCat = cat; if (!queue(cat).length) return renderDone(); renderSwipe(); show("swipe"); }
+function startMaybePass(){ maybePass = new Set(); if (!queue().length) return renderSummary(); renderSwipe(); show("swipe"); }
+
+function renderSwipe(){
+  const q = queue(curCat), it = q[0];
+  if (!it) return renderDone();
+  if (maybePass) {
+    const all = Object.values(items).filter(x => S.d[x.id]==="m").length + maybePass.size;
+    const doneN = maybePass.size;
+    $("swCat").textContent = `סבב "אולי" · ${it.cat.name}`;
+    $("swCount").textContent = `${doneN+1} / ${doneN + q.length}`;
+    $("swProg").style.width = (doneN/(doneN+q.length)*100) + "%";
+  } else {
+    const s = stats(curCat), doneN = s.total - s.left;
+    $("swCat").textContent = curCat.name;
+    $("swCount").textContent = `${doneN+1} / ${s.total}`;
+    $("swProg").style.width = (doneN/s.total*100) + "%";
+  }
+  $("btnU").disabled = S.h.length === 0;
+  const nxt = q[1];
+  $("stage").innerHTML = (nxt ? `<div class="card back"><img src="${nxt.src}" alt=""></div>` : "") +
+    `<div class="card" id="top"><img src="${it.src}" alt="${it.cat.name} ${it.n}"><span class="num">${it.n}</span><span class="stamp k">שומרת</span><span class="stamp x">מעיפה</span><span class="stamp m">אולי</span></div>`;
+  if (q[2]) { const p = new Image(); p.src = q[2].src; }
+  bindDrag($("top"), it);
+}
+
+function bindDrag(card, it){
+  let sx=0, sy=0, dx=0, dy=0, t0=0, down=false;
+  const st = {k:card.querySelector(".stamp.k"), x:card.querySelector(".stamp.x"), m:card.querySelector(".stamp.m")};
+  const clamp = v => Math.max(0, Math.min(1, v));
+  card.addEventListener("pointerdown", e => { if (busy) return; down=true; sx=e.clientX; sy=e.clientY; dx=dy=0; t0=Date.now(); card.setPointerCapture(e.pointerId); card.style.transition="none"; });
+  card.addEventListener("pointermove", e => {
+    if (!down) return; dx=e.clientX-sx; dy=e.clientY-sy;
+    const up = -dy > Math.abs(dx);
+    card.style.transform = up ? `translate(${dx*0.3}px,${dy}px)` : `translate(${dx}px,${dy*0.3}px) rotate(${dx/18}deg)`;
+    st.k.style.opacity = up ? 0 : clamp(dx/90); st.x.style.opacity = up ? 0 : clamp(-dx/90); st.m.style.opacity = up ? clamp(-dy/90) : 0;
+  });
+  const end = () => {
+    if (!down) return; down=false;
+    const dt = Math.max(1, Date.now()-t0);
+    if (-dy > Math.abs(dx) && (-dy > 100 || (-dy/dt > 0.6 && -dy > 35))) return decide("m", card);
+    if (Math.abs(dx) > 100 || (Math.abs(dx)/dt > 0.6 && Math.abs(dx) > 35)) return decide(dx>0 ? "k" : "x", card);
+    card.style.transition = "transform .25s"; card.style.transform = ""; Object.values(st).forEach(e => e.style.opacity = 0);
+    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) openLightbox(it.src);
+  };
+  card.addEventListener("pointerup", end); card.addEventListener("pointercancel", end);
+}
+
+function decide(dir, card){
+  const it = queue(curCat)[0]; if (!it || busy) return;
+  busy = true; card = card || $("top");
+  card.style.transition = "transform .3s ease-in";
+  card.querySelector(".stamp."+dir).style.opacity = 1;
+  card.style.transform = dir==="m" ? "translate(0,-120vh)" : `translate(${dir==="k" ? 140 : -140}vw, 40px) rotate(${dir==="k" ? 28 : -28}deg)`;
+  S.h.push({i:it.id, p:S.d[it.id] || null, mp:!!maybePass});
+  S.d[it.id] = dir; if (maybePass) maybePass.add(it.id); save();
+  setTimeout(() => { busy = false; renderSwipe(); }, 280);
+}
+
+function undo(){
+  if (busy || !S.h.length) return;
+  const e = S.h.pop(); const it = items[e.i]; const was = S.d[e.i];
+  if (e.p) S.d[e.i] = e.p; else delete S.d[e.i];
+  save();
+  if (e.mp && maybePass) maybePass.delete(e.i);
+  else if (!e.p) { maybePass = null; curCat = it.cat; }
+  else { maybePass = new Set(); } // undid a maybe-pass decision from an earlier visit: reopen the maybe pass
+  renderSwipe(); show("swipe");
+  const c = $("top");
+  if (c) { c.style.transition="none"; c.style.transform = was==="m" ? "translate(0,-120vh)" : `translate(${was==="k"?120:-120}vw,0) rotate(${was==="k"?20:-20}deg)`;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ c.style.transition="transform .3s ease-out"; c.style.transform=""; })); }
+  toast(`חזרה לתמונה ${it.n} ב${it.cat.name}`);
+}
+$("btnK").onclick = () => decide("k");
+$("btnX").onclick = () => decide("x");
+$("btnM").onclick = () => decide("m");
+$("btnU").onclick = undo;
+$("backHome").onclick = renderHome;
+document.addEventListener("keydown", e => {
+  if (!$("swipe").classList.contains("on")) return;
+  if (e.key==="ArrowRight") decide("k"); else if (e.key==="ArrowLeft") decide("x"); else if (e.key==="ArrowUp") decide("m");
+  else if (e.key==="Backspace" || (e.key==="z" && (e.ctrlKey||e.metaKey))) undo();
+});
+
+/* DONE */
+function renderDone(){
+  const nb = $("doneNext");
+  $("doneUndo").style.display = S.h.length ? "" : "none";
+  if (maybePass) {
+    const s = stats();
+    $("doneTitle").textContent = 'סיימת את סבב ה"אולי"';
+    $("doneText").innerHTML = `<b style="color:var(--keep)">${s.k} נשארים</b> · <b style="color:var(--drop)">${s.x} יוצאים</b> · <b style="color:var(--maybe)">${s.m} עדיין אולי</b>`;
+    nb.textContent = "לסיכום"; nb.onclick = renderSummary; $("doneSum").style.display = "none";
+    return show("done");
+  }
+  const s = stats(curCat);
+  const idx = DATA.categories.indexOf(curCat);
+  const nextCat = DATA.categories.slice(idx+1).concat(DATA.categories.slice(0, idx)).find(c => queue(c).length);
+  $("doneTitle").textContent = `סיימת את ${curCat.name}`;
+  $("doneText").innerHTML = `<b style="color:var(--keep)">${s.k} נשארים</b> · <b style="color:var(--drop)">${s.x} יוצאים</b>` + (s.m ? ` · <b style="color:var(--maybe)">${s.m} אולי</b>` : "");
+  if (nextCat) { nb.textContent = `הלאה ל${nextCat.name}`; nb.onclick = () => openCat(nextCat); }
+  else { nb.textContent = "לסיכום"; nb.onclick = renderSummary; }
+  $("doneSum").style.display = nextCat ? "" : "none";
+  show("done");
+}
+$("doneUndo").onclick = undo;
+$("doneSum").onclick = renderSummary;
+
+/* SUMMARY */
+function thumb(it){ return `<button class="th ${S.d[it.id]}" data-i="${it.id}" aria-label="${it.cat.name} ${it.n}"><img src="${it.src}" alt="" loading="lazy"><span class="n">${it.n}</span></button>`; }
+function group(c, d, color){
+  const list = c.items.filter(i => S.d[i.id]===d);
+  return `<div class="grp" data-c="${c.id}" data-d="${d}"><h4><span class="dot" style="background:var(--${color})"></span>${WORD[d]} (${list.length})</h4>${list.length ? `<div class="grid">${list.map(thumb).join("")}</div>` : `<p class="empty">אין</p>`}</div>`;
+}
+function renderSummary(){
+  maybePass = null;
+  const s = stats(), final = s.left === 0 && s.m === 0;
+  $("sumTitle").textContent = final ? "סיכום סופי" : "סיכום ביניים";
+  $("sumTotals").innerHTML = totalsHTML();
+  let banner = "";
+  if (s.left) banner += `<div class="banner">נשארו עוד ${s.left} פריטים למיין. ההתקדמות שמורה, אפשר להמשיך מאיפה שעצרת.<div class="row" style="margin:8px 0 0"><button class="btn" id="resume">להמשיך למיין</button></div></div>`;
+  if (s.m) banner += `<div class="banner" style="background:var(--maybe-soft)">יש ${s.m} פריטים ב"אולי". כדאי לעבור עליהם שוב ולהחליט.<div class="row" style="margin:8px 0 0"><button class="btn" style="background:var(--maybe)" id="maybeGo">לעבור על ה"אולי"</button></div></div>`;
+  $("sumBanner").innerHTML = banner;
+  if (s.left) $("resume").onclick = () => openCat(DATA.categories.find(c => queue(c).length));
+  if (s.m) $("maybeGo").onclick = startMaybePass;
+  $("sumBody").innerHTML = DATA.categories.map(c => {
+    const cs = stats(c);
+    return `<div class="sum-cat"><h3>${c.name} <small>${cs.k} שומרת · ${cs.m} אולי · ${cs.x} זורקת${cs.left ? ` · ${cs.left} טרם מוינו` : ""}</small></h3>
+      ${group(c,"k","keep")}${group(c,"m","maybe")}${group(c,"x","drop")}</div>`;
+  }).join("");
+  $("waSum").href = "https://wa.me/?text=" + encodeURIComponent(summaryText());
+  show("summary");
+}
+/* summary: single tap = open with choices, double tap = pick up and drag to another group */
+let lastTap = {id:null, t:0}, tapTimer = null, armed = null, drag = null;
+function chooser(it){
+  modal(`<img class="pv" src="${it.src}" alt=""><h3 style="margin-top:10px">${it.cat.name} ${it.n} · כרגע: ${WORD[S.d[it.id]]}</h3>
+    <div class="choice"><button class="btn" style="background:var(--keep)" data-set="k">שומרת</button><button class="btn" style="background:var(--maybe)" data-set="m">אולי</button><button class="btn" style="background:var(--drop)" data-set="x">זורקת</button></div>`,
+    () => $("modalBox").querySelectorAll("[data-set]").forEach(btn => btn.onclick = () => { closeModal(); setDecision(it, btn.dataset.set); }));
+}
+function setDecision(it, d){
+  if (S.d[it.id] === d) return;
+  S.d[it.id] = d; save();
+  const y = window.scrollY; renderSummary(); window.scrollTo(0, y);
+  toast(`${it.cat.name} ${it.n} עבר ל${WORD[d]}`);
+}
+function disarm(){ armed = null; document.querySelectorAll(".th.lift").forEach(e => e.classList.remove("lift")); document.body.classList.remove("dragging"); }
+function arm(btn){
+  disarm(); armed = btn.dataset.i; btn.classList.add("lift"); document.body.classList.add("dragging");
+  toast("עכשיו גוררים לקבוצה אחרת");
+}
+const sb = $("sumBody");
+sb.addEventListener("pointerdown", e => {
+  const b = e.target.closest(".th"); if (!b) return;
+  b._sx = e.clientX; b._sy = e.clientY;
+  if (armed === b.dataset.i) { e.preventDefault(); startDrag(b, e); }
+});
+sb.addEventListener("pointerup", e => {
+  const b = e.target.closest(".th"); if (!b || drag) return;
+  if (Math.abs(e.clientX - b._sx) > 8 || Math.abs(e.clientY - b._sy) > 8) return;
+  const id = b.dataset.i, now = Date.now();
+  if (lastTap.id === id && now - lastTap.t < 380) { clearTimeout(tapTimer); lastTap = {id:null, t:0}; arm(b); return; }
+  lastTap = {id, t:now}; clearTimeout(tapTimer);
+  if (armed && armed !== id) disarm();
+  if (armed === id) return;
+  tapTimer = setTimeout(() => chooser(items[id]), 380);
+});
+document.addEventListener("pointerdown", e => { if (armed && !e.target.closest(".th.lift")) disarm(); });
+
+function startDrag(b, e){
+  const r = b.getBoundingClientRect();
+  const g = b.cloneNode(true); g.className = "th ghost"; g.style.width = r.width + "px"; g.style.height = r.height + "px";
+  document.body.appendChild(g);
+  drag = {b, g, it: items[b.dataset.i], ox: r.width/2, oy: r.height/2, target: null, y: e.clientY};
+  b.setPointerCapture(e.pointerId);
+  moveDrag(e); scrollLoop();
+}
+function moveDrag(e){
+  if (!drag) return;
+  drag.y = e.clientY;
+  drag.g.style.transform = `translate(${e.clientX - drag.ox}px, ${e.clientY - drag.oy}px) scale(1.08)`;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const grp = el && el.closest(".grp");
+  const ok = grp && grp.dataset.c === drag.it.cat.id ? grp : null;
+  if (ok !== drag.target) { if (drag.target) drag.target.classList.remove("over"); drag.target = ok; if (ok) ok.classList.add("over"); }
+}
+function scrollLoop(){
+  if (!drag) return;
+  const edge = 90, h = window.innerHeight;
+  if (drag.y < edge) window.scrollBy(0, -12); else if (drag.y > h - edge) window.scrollBy(0, 12);
+  requestAnimationFrame(scrollLoop);
+}
+function endDrag(){
+  if (!drag) return;
+  const {g, it, target} = drag; drag = null; g.remove(); disarm();
+  if (target) { target.classList.remove("over"); setDecision(it, target.dataset.d); }
+}
+sb.addEventListener("pointermove", e => { if (drag) { e.preventDefault(); moveDrag(e); } });
+sb.addEventListener("pointerup", endDrag);
+sb.addEventListener("pointercancel", endDrag);
+$("sumBack").onclick = renderHome;
+
+function summaryText(){
+  const s = stats();
+  let t = `${DATA.clinic} | ${s.left || s.m ? "סיכום ביניים" : "סיכום סופי"}\nשומרת: ${s.k} | זורקת: ${s.x} | אולי: ${s.m}${s.left ? ` | נשאר למיין: ${s.left}` : ""}\n`;
+  DATA.categories.forEach(c => {
+    const nums = d => c.items.filter(i => S.d[i.id]===d).map(i => i.n);
+    t += `\n${c.name}\n`;
+    ["k","m","x"].forEach(d => { const n = nums(d); if (d!=="m" || n.length) t += `${WORD[d]} (${n.length}): ${n.join(", ") || "-"}\n`; });
+  });
+  return t;
+}
+$("copySum").onclick = async () => {
+  const t = summaryText();
+  try { await navigator.clipboard.writeText(t); toast("הסיכום הועתק"); }
+  catch(e) { modal(`<h3>העתקת הסיכום</h3><p class="hint">מסמנים את הטקסט ומעתיקים:</p><textarea readonly></textarea><div class="row"><button class="btn" data-close>סגירה</button></div>`); const ta=$("modalBox").querySelector("textarea"); ta.value=t; ta.focus(); ta.select(); }
+};
+$("resetAll").onclick = () => modal(`<h3>להתחיל מחדש?</h3><p class="hint">כל ההחלטות יימחקו וכל התמונות יחזרו למיון.</p><div class="row"><button class="btn" style="background:var(--drop)" id="doReset">כן, למחוק הכל</button><button class="btn ghost" data-close>ביטול</button></div>`, () => { $("doReset").onclick = () => { S = {d:{}, h:[]}; save(); closeModal(); renderHome(); toast("הכל אופס"); }; });
+
+/* overlays */
+function modal(html, after){ $("modalBox").innerHTML = html; $("modal").classList.add("on"); if (after) after(); }
+function closeModal(){ $("modal").classList.remove("on"); }
+$("modal").addEventListener("click", e => { if (e.target.id==="modal" || e.target.hasAttribute("data-close")) closeModal(); });
+function openLightbox(src){ $("lbImg").src = src; $("lightbox").classList.add("on"); }
+$("lightbox").onclick = () => $("lightbox").classList.remove("on");
+
+renderHome();
+</script>
+</body>
+</html>
